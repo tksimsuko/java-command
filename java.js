@@ -4,7 +4,7 @@ const child_process = require('child_process');
 
 //TODO　data文字列化　文字コード指定
 module.exports = function(param){
-    let javaPath = param.javaPath || 'java';
+    let javaPath = param.java || 'java';
     let jvmOptions = param.jvmOptions || [];
     let classpathArray = param.classpath || [];
     let tempPath = param.tempPath || '';
@@ -18,11 +18,11 @@ module.exports = function(param){
 
     ////////// function
     //Javaコマンドを実行する
-    //@require executableJavaPath
+    //@require executableJavaName
     //第2引数以降：　可変長リストを受け取り、javaコマンドのパラメータとして渡す
-    function execute(executableJavaPath){
-        if(!executableJavaPath){
-            throw new Error('executableJavaPath is required.');
+    function execute(executableJavaName){
+        if(!executableJavaName){
+            throw new Error('executableJavaName is required.');
         }
 
         let stdoutBuffer = Buffer.from('');
@@ -36,7 +36,7 @@ module.exports = function(param){
         let argArray = Array.prototype.slice.call(arguments);
         let args = argArray.length > 1 ? argArray.slice(1) : [];
 
-        let commandArgs = generateCommandArgs(executableJavaPath, args);
+        let commandArgs = generateCommandArgs(executableJavaName, args);
         //shell: false -> パラメータ文字列を空白文字で区切らない　空白文字が含まれていても一つのパラメータとしてjavaに渡す
         let javaProcess = child_process.spawn(javaPath, commandArgs, {cwd: cwdPath, env: {TEMP: tempPath}, shell: false});
 
@@ -108,7 +108,7 @@ module.exports = function(param){
             }
         }
     }
-    function generateCommandArgs(executableJavaPath, args){
+    function generateCommandArgs(executableJavaName, args){
         let result = [];
 
         if(jvmOptions && jvmOptions.length > 0){
@@ -118,7 +118,7 @@ module.exports = function(param){
             result.push('-classpath');
             result.push(classpathArray.join(path.delimiter));
         }
-        result.push(executableJavaPath);
+        result.push(executableJavaName);
         if(args && args.length > 0){
             args.forEach(function(arg){
                 if(typeof(arg) === 'string'){
