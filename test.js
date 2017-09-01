@@ -1,26 +1,27 @@
-const Java = require('./java.js');
+const Java = require('./java-command.js');
 
 let java = Java({
 	javaPath: 'C:/neko/openJdk/bin/java.exe',
 	jvmOptions: ['-Xms256M', '-Xmx512M'],
-	tempPath: 'C:/neko/java/tmp',
 	classpath: [
 		'C:/neko/java/classes/',
-		'C:/neko/java/'
+		'C:/neko/build/bin/'
 	],
-	cwd: 'C:/neko/java'
+	cwd: 'C:/neko/java',
+	tempPath: 'C:/neko/java/tmp'
 });
 
-java.execute('hoge.neko.Test', 'a b c');
-java.systemOut(function(out){
-	console.log('OUT', out.toString());
-});
-java.systemError(function(err){
-	console.log('ERROR', err.toString());
-});
-java.end(function(code){
-	console.log('END', code);
-});
-java.error(function(err){
-	console.log('error', err);
-});
+java.execute('hoge.neko.Test', 'a b c', 'd', 'e')
+	.systemIn('nekoneko')
+	.systemOut(function(out){
+		console.log('OUT', out.toString());
+	})
+	.systemError(function(err){
+		console.log('ERROR', err.toString());
+	})
+	.end(function(code){
+		console.log('END', code);
+	})
+	.error(function(err){
+		console.log('error', err);
+	});

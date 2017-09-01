@@ -17,8 +17,7 @@ module.exports = function(param){
     }
     
     return {
-        execute: execute,
-        executeCommand: executeCommand,
+        execute: spawnCommand,
         classpath: classpath
     };
 
@@ -26,15 +25,11 @@ module.exports = function(param){
     //Javaを実行する
     //@param executableJavaName @required
     //@param data Javaに渡すデータ(System.inに渡す)
-    function execute(executableJavaName, data){
-        let javaProcess = executeJava(executableJavaName, data);
-        let processHandler = applyEvent(javaProcess);
-
-        if(data){
-            processHandler.systemIn(data);
-        }
-
-        return processHandler;
+    function spawnCommand(executableJavaName){
+        let argArray = Array.prototype.slice.call(arguments);
+        let args = argArray.length > 1 ? argArray.slice(1) : [];
+        let javaProcess = executeSpawnJava(executableJavaName, args);
+        return applyEvent(javaProcess);
     }
     //Javaコマンドを実行する
     //@param executableJavaName @required
@@ -42,7 +37,7 @@ module.exports = function(param){
     function executeCommand(executableJavaName){
         let argArray = Array.prototype.slice.call(arguments);
         let args = argArray.length > 1 ? argArray.slice(1) : [];
-        let javaProcess = executeJavaCommand(executableJavaName, args);
+        let javaProcess = executeJava(executableJavaName, args);
         return applyEvent(javaProcess);
     }
     //classpthをセットする
@@ -59,12 +54,11 @@ module.exports = function(param){
         }
     }
 
-
-    function executeJava(executableJavaName){
-        let spawnArgs = generateSpawnArgs(executableJavaName);
+    function executeSpawnJava(executableJavaName, args){
+        let spawnArgs = generateSpawnArgs(executableJavaName, args);
         return child_process.spawn(javaPath, spawnArgs, {cwd: cwdPath, env: {TEMP: tempPath}});
     }
-    function executeJavaCommand(executableJavaName, args){
+    function executeJava(executableJavaName, args){
         let command = generateCommand(executableJavaName, args);
         //shell: false -> パラメータ文字列を空白文字で区切らない　空白文字が含まれていても一つのパラメータとしてjavaに渡す
         return child_process.exec(command, {cwd: cwdPath, env: {TEMP: tempPath}, shell: false});
@@ -77,7 +71,6 @@ module.exports = function(param){
         let systemErrorCallback = param.systemError;
         let endCallback = param.end;
         let errorCallback = param.error;
-
 
         //event
         javaProcess.stdout.on('data', function(data){
@@ -115,6 +108,7 @@ module.exports = function(param){
                 }
                 javaProcess.stdin.write(data);
                 javaProcess.stdin.end();
+                return this;
             },
             systemOut: function(callback){
                 if(callback){
@@ -164,7 +158,7 @@ module.exports = function(param){
         }
         return command;
     }
-    function generateSpawnArgs(executableJavaName){
+    function generateSpawnArgs(executableJavaName, args){
         let result = [];
         if(jvmOptions && jvmOptions.length > 0){
             result = result.concat(jvmOptions);
@@ -174,6 +168,10 @@ module.exports = function(param){
             result.push(classpathArray.join(path.delimiter));
         }
         result.push(executableJavaName);
+
+        if(args && args.length > 0){
+            result = result.concat(args);
+        }
         return result;
     }
 };
