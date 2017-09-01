@@ -1,7 +1,6 @@
 const path = require('path');
 const child_process = require('child_process');
 
-//TODO　data文字列化　文字コード指定
 module.exports = function(param){
     let javaPath;
     let jvmOptions = param.jvmOptions || [];
