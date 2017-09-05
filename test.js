@@ -19,7 +19,7 @@ java.execute('hoge.neko.Test', 'a b c', 'd', 'e')
 	.systemError(function(err){
 		console.log('ERROR', err.toString());
 	})
-	.end(function(code){
+	.end(function(buff, errorBuff, code){
 		console.log('END', code);
 	})
 	.error(function(err){

@@ -76,7 +76,7 @@ module.exports = function(param){
         });
         javaProcess.on('close', function(code){
             if(endCallback){
-                endCallback(code, stdoutBuffer, stderrBuffer);
+                endCallback(stdoutBuffer, stderrBuffer, code);
             }
         });
         javaProcess.on('error', function(err){
