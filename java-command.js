@@ -2,7 +2,7 @@ const path = require('path');
 const child_process = require('child_process');
 
 module.exports = function(param){
-    let javaPath;
+    let executeJava;
     let jvmOptions = param.jvmOptions || [];
     let classpathArray = param.classpath || [];
     let tempPath = param.temp || '';
@@ -10,9 +10,9 @@ module.exports = function(param){
     let isBufferMode = param.bufferMode;
 
     if(param.java){
-        javaPath = path.resolve(cwdPath, param.java);
+        executeJava = path.resolve(cwdPath, param.java);
     }else{
-        javaPath = 'java';
+        executeJava = 'java';
     }
     
     return {
@@ -22,8 +22,8 @@ module.exports = function(param){
 
     ////////// function
     //Javaを実行する
-    //@param executableJavaName @required
-    //@param data Javaに渡すデータ(System.inに渡す)
+    //@param executableJavaName - required
+    //@param 第2引数以降　　コマンドパラメータとしてJavaに渡る
     function spawnCommand(executableJavaName){
         let argArray = Array.prototype.slice.call(arguments);
         let args = argArray.length > 1 ? argArray.slice(1) : [];
@@ -46,7 +46,7 @@ module.exports = function(param){
 
     function executeSpawnJava(executableJavaName, args){
         let spawnArgs = generateSpawnArgs(executableJavaName, args);
-        return child_process.spawn(javaPath, spawnArgs, {cwd: cwdPath, env: {TEMP: tempPath}});
+        return child_process.spawn(executeJava, spawnArgs, {cwd: cwdPath, env: {TEMP: tempPath}});
     }
     function applyEvent(javaProcess){
         let stdoutBuffer = Buffer.from('');
@@ -66,7 +66,7 @@ module.exports = function(param){
                 systemOutCallback(data);
             }
         });
-        javaProcess.stderr.on('stderr data', function(data){
+        javaProcess.stderr.on('stderr', function(data){
             if(isBufferMode){
                 stderrBuffer = Buffer.concat([stderrBuffer, Buffer.from(data)]);
             }
