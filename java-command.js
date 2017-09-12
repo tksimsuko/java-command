@@ -2,7 +2,7 @@ const path = require('path');
 const child_process = require('child_process');
 
 module.exports = function(param){
-    let executeJava;
+    let javaPath;
     let jvmOptions = param.jvmOptions || [];
     let classpathArray = param.classpath || [];
     let tempPath = param.temp || '';
@@ -10,13 +10,14 @@ module.exports = function(param){
     let isBufferMode = param.bufferMode;
 
     if(param.java){
-        executeJava = path.resolve(cwdPath, param.java);
+        javaPath = path.resolve(cwdPath, param.java);
     }else{
-        executeJava = 'java';
+        javaPath = 'java';
     }
     
     return {
         execute: spawnCommand,
+        executeSync: spawnSync,
         classpath: classpath
     };
 
@@ -27,8 +28,21 @@ module.exports = function(param){
     function spawnCommand(executableJavaName){
         let argArray = Array.prototype.slice.call(arguments);
         let args = argArray.length > 1 ? argArray.slice(1) : [];
-        let javaProcess = executeSpawnJava(executableJavaName, args);
+        let javaProcess = executeSpawn(executableJavaName, args);
         return applyEvent(javaProcess);
+    }
+    //Javaを実行する
+    //同期的に実行する
+    //@param executableJavaName - required
+    //@param input　　System.inに渡るデータ
+    //@param paramArray コマンドパラメータとしてJavaに渡る配列
+    //@return object (status, signal, pid, output, stdout, stderr, err, envPairs, options, args)
+    function spawnSync(executableJavaName, input, paramArray){
+        let spawnArgs = generateSpawnArgs(executableJavaName, paramArray);
+        if(typeof(input) === 'object'){
+            input = JSON.stringify(input);
+        }
+        return child_process.spawnSync(javaPath, spawnArgs, {input: input, cwd: cwdPath, env: {TEMP: tempPath}});
     }
     //classpthをセットする
     function classpath(pathParam){
@@ -44,9 +58,9 @@ module.exports = function(param){
         }
     }
 
-    function executeSpawnJava(executableJavaName, args){
+    function executeSpawn(executableJavaName, args){
         let spawnArgs = generateSpawnArgs(executableJavaName, args);
-        return child_process.spawn(executeJava, spawnArgs, {cwd: cwdPath, env: {TEMP: tempPath}});
+        return child_process.spawn(javaPath, spawnArgs, {cwd: cwdPath, env: {TEMP: tempPath}});
     }
     function applyEvent(javaProcess){
         let stdoutBuffer = Buffer.from('');
@@ -66,7 +80,7 @@ module.exports = function(param){
                 systemOutCallback(data);
             }
         });
-        javaProcess.stderr.on('stderr', function(data){
+        javaProcess.stderr.on('stderr data', function(data){
             if(isBufferMode){
                 stderrBuffer = Buffer.concat([stderrBuffer, Buffer.from(data)]);
             }
