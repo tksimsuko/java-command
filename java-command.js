@@ -1,6 +1,20 @@
 const path = require('path');
 const child_process = require('child_process');
 
+/**
+ * Javaコマンドを実行する
+ * @param java (optional / java実行ファイルのパス)
+ * @param jvmOptions (optional / jvmオプション文字列のリスト)
+ * @param classpath (optional / classpath文字列のリスト)
+ * @param temp (optional / tempパス)
+ * @param cwd (optional / アプリケーションルートパス)
+ * @param bufferMode (optional / trueの場合stdout・stderrをバッファリングする executeでのみ有効　デフォルト:false)
+ * 
+ * return 
+ *     execute
+ *     executeSync
+ *     classpath
+*/
 module.exports = function(param){
     let javaPath;
     let jvmOptions = param.jvmOptions || [];
@@ -57,11 +71,13 @@ module.exports = function(param){
             }
         }
     }
-
+    //spawnコマンドを実行する
     function executeSpawn(executableJavaName, args){
         let spawnArgs = generateSpawnArgs(executableJavaName, args);
         return child_process.spawn(javaPath, spawnArgs, {cwd: cwdPath, env: {TEMP: tempPath}});
     }
+    //spawnコマンドに関するイベントを登録する
+    //イベントをハンドリングするclosureを返す
     function applyEvent(javaProcess){
         let stdoutBuffer = Buffer.from('');
         let stderrBuffer = Buffer.from('');
@@ -135,6 +151,7 @@ module.exports = function(param){
             }
         };
     }
+    //spawnコマンドの引数を生成する
     function generateSpawnArgs(executableJavaName, args){
         let result = [];
         if(jvmOptions && jvmOptions.length > 0){
